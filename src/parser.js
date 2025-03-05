@@ -168,16 +168,17 @@ export function safe_parse_light(xml_element, scene) {
         const dir = safe_parse_vector3(xml_element, "dir", new THREE.Vector3(0, 0, -1));
         dir.normalize();
 
-        light.position.set(-dir.x, -dir.y, -dir.z);
-        // const target_position = new THREE.Vector3();
-        // target_position.addVectors(light.position, dir);
-        // light.target.position.copy(target_position);
+        const target_position = new THREE.Vector3();
+        target_position.addVectors(light.position, dir);
+        light.target.position.copy(target_position);
+        scene.add(light.target);
 
-        //// // Parse remaining attributes
-        //// const cast_shadow = safe_parse_boolean(xml_element, "castshadow", true);
-        //// const attenuation = safe_parse_vector3(xml_element, "attenuation", new THREE.Vector3(1, 0, 0));
+        // Parse remaining attributes
+        const cast_shadow = safe_parse_boolean(xml_element, "castshadow", true);
+        const attenuation = safe_parse_vector3(xml_element, "attenuation", new THREE.Vector3(1, 0, 0));
 
-        light.castShadow = true;
+        light.penumbra = 0.5;
+        light.castShadow = cast_shadow;
     }
 
     return light;
@@ -289,6 +290,7 @@ export function safe_parse_geom(xml_element) {
         {
             "color": color,
             "opacity": alpha,
+            "side": THREE.DoubleSide,
         }
     );
 

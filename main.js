@@ -19,7 +19,7 @@ function init() {
     const grid = new THREE.GridHelper(10, 10, 0x444444, 0x888888);
     scene.add(grid);
 
-    const ambientLight = new THREE.AmbientLight(0x777777);
+    const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
     scene.add(ambientLight);
 
     const axesHelper = new THREE.AxesHelper(5);
@@ -34,6 +34,8 @@ function init() {
     controls.update();
 
     camera.position.z = 5;
+
+    window.addEventListener("resize", resize);
 
     fetch("./assets/test.xml")
         .then(response => response.text())
@@ -55,7 +57,7 @@ function init() {
                     switch (xml.tagName) {
                         case "worldbody": {
                             const worldbody_object = new THREE.Group();
-                            // worldbody_object.rotation.x = -Math.PI * 0.5;
+                            worldbody_object.rotation.x = -Math.PI * 0.5;
                             parent.add(worldbody_object);
                             for (const child_xml of xml.children) {
                                 stack.push({
@@ -68,21 +70,28 @@ function init() {
                         }
 
                         case "light": {
-                            const light = MjParser.safe_parse_light(xml, scene);
+                            const light = MjParser.safe_parse_light(xml, parent);
                             if (light != null) {
                                 const pos = MjParser.safe_parse_vector3(xml, "pos", new THREE.Vector3());
                                 const local_tf = new THREE.Matrix4();
                                 local_tf.setPosition(pos.x, pos.y, pos.z);
                                 const world_tf = transform.multiply(local_tf);
-
+                                
                                 light.name = MjParser.safe_parse_string(xml, "name", "light-" + NUM_LIGHTS.toString());
-                                light.matrix.copy(local_tf);
-                                light.matrixWorld.copy(world_tf);
+                                let position = new THREE.Vector3();
+                                let quaternion = new THREE.Quaternion();
+                                let scale = new THREE.Vector3();
+                                local_tf.decompose(position, quaternion, scale);
+                                light.position.copy(position);
+                                light.quaternion.copy(quaternion);
 
-                                scene.add(light);
-                                if (light.target && (light.isDirectionalLight || light.isSpotLight)) {
-                                    scene.add(light.target);
-                                }
+                                // light.matrix.copy(local_tf);
+                                // light.matrixWorld.copy(world_tf);
+
+                                parent.add(light);
+                                // if (light.target && (light.isDirectionalLight || light.isSpotLight)) {
+                                //     parent.add(light.target);
+                                // }
                             }
 
                             NUM_LIGHTS++;
@@ -156,6 +165,12 @@ function animate() {
     controls.update();
 
     renderer.render(scene, camera);
+}
+
+function resize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 init();
