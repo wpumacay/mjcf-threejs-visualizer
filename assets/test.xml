@@ -1,0 +1,10 @@
+<mujoco model="test">
+    <worldbody>
+        <light diffuse="0.5 0.5 0.5" dir="0 0 -1" directional="true"/>
+        <geom type="plane" size="1 1 0.1" rgba="0.9 0.0 0.0 1.0"/>
+        <body pos="0 0 1">
+            <joint type="free"/>
+            <geom type="box" size="0.1 0.2 0.3" rgba="0.0 0.9 0.0 1.0"/>
+        </body>
+    </worldbody>
+</mujoco>
