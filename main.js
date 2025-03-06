@@ -14,13 +14,16 @@ var NUM_JOINTS = 0;
 
 function init() {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
 
     const grid = new THREE.GridHelper(10, 10, 0x444444, 0x888888);
     scene.add(grid);
 
     const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
     scene.add(ambientLight);
+
+    scene.background = new THREE.Color(0.15, 0.25, 0.35);
+    scene.fog = new THREE.Fog(scene.background, 15, 25.5);
 
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
@@ -33,11 +36,11 @@ function init() {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
 
-    camera.position.z = 5;
+    camera.position.set(1, 1, 2);
 
     window.addEventListener("resize", resize);
 
-    fetch("./assets/test.xml")
+    fetch("./assets/ant.xml")
         .then(response => response.text())
         .then(xml_str => {
             const parser = new DOMParser();
@@ -106,22 +109,10 @@ function init() {
                         }
 
                         case "geom": {
-                            const mesh_obj = MjParser.safe_parse_geom(xml);
-                            if (mesh_obj != null) {
-                                const local_tf = MjParser.safe_parse_transform(xml);
-                                const world_tf = transform.multiply(local_tf);
-
-                                mesh_obj.name = MjParser.safe_parse_string(xml, "name", "geom-" + NUM_GEOMS.toString());
-                                let position = new THREE.Vector3();
-                                let quaternion = new THREE.Quaternion();
-                                let scale = new THREE.Vector3(1, 1, 1);
-                                local_tf.decompose(position, quaternion, scale);
-                                mesh_obj.position.copy(position);
-                                mesh_obj.quaternion.copy(quaternion);
-                                // mesh_obj.matrixWorld.copy(world_tf);
-
-                                parent.add(mesh_obj);
-                            }
+                            const geom_mesh = MjParser.safe_parse_geom(xml, parent);
+                            geom_mesh.name = MjParser.safe_parse_string(xml, "name", "geom-" + NUM_GEOMS.toString());
+                            
+                            parent.add(geom_mesh);
                         }
 
                         case "body": {

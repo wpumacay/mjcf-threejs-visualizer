@@ -1,3 +1,4 @@
 node_modules/
 .vscode/
 references/
+MUJOCO_LOG.TXT
