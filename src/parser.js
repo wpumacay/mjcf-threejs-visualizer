@@ -461,6 +461,7 @@ export class mjXReader {
                             console.error("Light object can only have 'body' and 'worldbody' as parents");
                         }
                     }
+                    this.spec.lights.push(light);
                     break;
                 }
                 case "geom": {
@@ -611,8 +612,8 @@ export class mjXReader {
         geom.material = safe_parse_string(elem, "material", "");
         geom.rgba = safe_parse_vector4(elem, "rgba", new THREE.Vector4(0.5, 0.5, 0.5, 1.0));
         geom.group = safe_parse_int(elem, "group", 0);
-        geom.hfieldname = safe_parse_string(elem, "hfieldname", "");
-        geom.meshname = safe_parse_string(elem, "meshname", "");
+        geom.hfieldname = safe_parse_string(elem, "hfield", "");
+        geom.meshname = safe_parse_string(elem, "mesh", "");
         geom.class = safe_parse_string(elem, "class", "");
         if (!this.readingDefaults) {
             this._numGeoms++;

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { mjsLight, mjSpec, mjsWorldbody, mjsGeom, mjsBody } from './mjcf';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 
 export class Visualizer {
 
@@ -10,12 +12,16 @@ export class Visualizer {
      */
     constructor(width, height) {
         this.spec = null;
+        this.uri = "";
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0.15, 0.25, 0.35);
         this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100);
 
         const axesHelper = new THREE.AxesHelper(5);
         this.scene.add(axesHelper);
+
+        this.textures = {};
+        this.meshes = {};
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(width, height);
@@ -26,13 +32,21 @@ export class Visualizer {
         this.controls.update();
 
         this.camera.position.set(1, 1, 2);
+
+        this.objLoader = new OBJLoader();
+        this.mtlloader = new MTLLoader();
     }
 
     /**
      * @param {mjSpec} spec
+     * @param {string} uri
      */
-    initFromSpec(spec) {
+    initFromSpec(spec, uri) {
         this.spec = spec;
+        this.uri = uri;
+
+        this.basedir = this.uri.substring(0, this.uri.lastIndexOf("/"));
+        this.mtlloader.setPath(this.basedir);
 
         const stack = [{ node: this.spec.worldbody, parent: null }];
         while (stack.length > 0) {
@@ -54,10 +68,11 @@ export class Visualizer {
                     light = new THREE.DirectionalLight(node.diffuse.getHex());
                 }
                 else {
-                    light = new THREE.SpotLight(node.diffuse.getHex());
+                    light = new THREE.DirectionalLight(node.diffuse.getHex());
                 }
                 light.name = node.name;
                 light.castShadow = node.castshadow;
+                light.position.copy(node.pos);
 
                 parent.add(light);
             }
@@ -103,12 +118,26 @@ export class Visualizer {
                         break;
                     }
                     case "mesh": {
-                        console.error("Mesh geoms are not supported yet");
+                        const mesh_name = node.meshname;
+                        if (mesh_name in this.spec.meshes) {
+                            const mesh_spec = this.spec.meshes[mesh_name];
+                            const mesh_uri = this.basedir + "/" + mesh_spec.file;
+                            this.objLoader.load(
+                                mesh_uri,
+                                function (object) {
+                                    parent.add(object)
+                                },
+                                null,
+                                function (error) {
+                                    console.error("An error occurred while loading object " + mesh_uri);
+                                }
+                            )
+                        }
                         break;
                     }
                     default:
                         console.error("Shouldn't get here. Something went wrong");
-                    break;
+                        break;
                 }
 
                 if (geometry != null) {
@@ -126,6 +155,8 @@ export class Visualizer {
                     mesh.position.copy(node.pos);
                     mesh.quaternion.copy(node.quat);
                     mesh.name = node.name;
+                    mesh.castshadow = true;
+                    mesh.receiveShadow = true;
 
                     if (node.type == "cylinder" || node.type == "capsule") {
                         mesh.rotateX(-Math.PI * 0.5);
@@ -142,18 +173,23 @@ export class Visualizer {
                 parent.add(body_obj);
 
                 for (const geom of node.geoms) {
-                    stack.push({node: geom, parent: body_obj});
+                    stack.push({ node: geom, parent: body_obj });
                 }
                 for (const joint of node.joints) {
-                    stack.push({node: joint, parent: body_obj});
+                    stack.push({ node: joint, parent: body_obj });
                 }
                 for (const light of node.lights) {
-                    stack.push({node: light, parent: body_obj});
+                    stack.push({ node: light, parent: body_obj });
                 }
                 for (const body of node.bodies) {
-                    stack.push({node: body, parent: body_obj});
+                    stack.push({ node: body, parent: body_obj });
                 }
             }
+        }
+        if (this.spec.lights.length < 1) {
+            const default_light = new THREE.DirectionalLight();
+            default_light.position.set(1, 1, 1);
+            this.scene.add(default_light);
         }
     }
 

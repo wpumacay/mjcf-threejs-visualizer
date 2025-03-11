@@ -10,7 +10,10 @@ function init() {
 
     window.addEventListener("resize", resize);
 
-    fetch("./assets/humanoid.xml")
+    // const model_uri = "./assets/mustard_bottle/model.xml";
+    const model_uri = "./assets/kitchen/kitchen.xml";
+
+    fetch(model_uri)
         .then(response => response.text())
         .then(xml_str => {
             const parser = new DOMParser();
@@ -19,7 +22,7 @@ function init() {
             const mjreader = new mjXReader();
             mjreader.parse(xml_doc.children[0]);
 
-            visualizer.initFromSpec(mjreader.spec);
+            visualizer.initFromSpec(mjreader.spec, model_uri);
         });
 }
 

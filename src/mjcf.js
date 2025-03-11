@@ -160,6 +160,7 @@ export class mjSpec {
         this.materials = {};
         this.meshes = {};
         this.bodies = [];
+        this.lights = [];
         this.worldbody = null;
     }
 };
