@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { z2quat } from './math';
+import { mjSpec, mjsDefault, mjsLight, mjsGeom, mjsBody, mjsTexture, mjsMaterial, mjsMesh, mjsJoint, mjsWorldbody } from './mjcf';
 
 var NUM_TEXTURES = 0;
 var NUM_MATERIALS = 0;
@@ -211,12 +212,47 @@ export function safe_parse_transform(xml_element) {
         const euler = safe_parse_euler(xml_element, new THREE.Euler());
         quat.setFromEuler(euler);
     }
+    else if (xml_element.hasAttribute("axisangle")) {
+        console.error("Orientation by 'axisangle' is not supported yet");
+    }
+    else if (xml_element.hasAttribute("xyaxes")) {
+        console.error("Orientation by 'xyaxes' is not supported yet");
+    }
+    else if (xml_element.hasAttribute("zaxis")) {
+        console.error("Orientation by 'zaxis' is not supported yet");
+    }
 
     const transform = new THREE.Matrix4();
     transform.compose(pos, quat, new THREE.Vector3(1.0, 1.0, 1.0));
     return transform;
 }
 
+/**
+ * @param {Element} xml_element
+ * @returns {[THREE.Vector3, THREE.Quaternion]}
+ */
+export function safe_parse_pose(xml_element) {
+    const pos = safe_parse_vector3(xml_element, "pos", new THREE.Vector3());
+    let quat = new THREE.Quaternion();
+    if (xml_element.hasAttribute("quat")) {
+        quat = safe_parse_quaternion(xml_element, new THREE.Quaternion());
+    }
+    else if (xml_element.hasAttribute("euler")) {
+        const euler = safe_parse_euler(xml_element, new THREE.Euler());
+        quat.setFromEuler(euler);
+    }
+    else if (xml_element.hasAttribute("axisangle")) {
+        console.error("Orientation by 'axisangle' is not supported yet");
+    }
+    else if (xml_element.hasAttribute("xyaxes")) {
+        console.error("Orientation by 'xyaxes' is not supported yet");
+    }
+    else if (xml_element.hasAttribute("zaxis")) {
+        console.error("Orientation by 'zaxis' is not supported yet");
+    }
+
+    return [pos, quat];
+}
 
 /**
  * @param {Element} xml_element The XML element from which to get the attribute
@@ -259,6 +295,527 @@ export function safe_parse_light(xml_element, scene) {
 
     return light;
 }
+
+export class mjXReader {
+
+    constructor() {
+        this.readingDefaults = false;
+        this.spec = null;
+
+        this._numLights = 0;
+        this._numGeoms = 0;
+        this._numJoints = 0;
+        this._numBodies = 0;
+        this._numTextures = 0;
+        this._numMaterials = 0;
+        this._numMeshes = 0;
+    }
+
+    /**
+     * @param {Element} root 
+     */
+    parse(root) {
+        const modelName = safe_parse_string(root, "model", "");
+        this.spec = new mjSpec(modelName);
+        this.readingDefaults = false;
+
+        this._numLights = 0;
+        this._numGeoms = 0;
+        this._numJoints = 0;
+        this._numBodies = 0;
+        this._numTextures = 0;
+        this._numMaterials = 0;
+        this._numMeshes = 0;
+
+        for (const elem of root.children) {
+            if (elem.tagName == "default") {
+                this.readingDefaults = true;
+                this.parse_default(elem, this.spec.defaults['main']);
+                this.readingDefaults = false;
+            }
+            else if (elem.tagName == "asset") {
+                this.parse_assets_section(elem);
+            }
+            else if (elem.tagName == "worldbody") {
+                this.parse_worldbody_section(elem);
+            }
+        }
+
+        this.replace_defaults();
+    }
+
+    /**
+     * @param {Element} elem
+     * @param {mjsDefault} def
+     */
+    parse_default(elem, def) {
+        for (const child_elem of elem.children) {
+            switch (child_elem.tagName) {
+                case "light": {
+                    def.light = this.parse_one_light(child_elem);
+                    break;
+                }
+                case "geom": {
+                    def.geom = this.parse_one_geom(child_elem);
+                    break;
+                }
+                case "joint": {
+                    def.joint = this.parse_one_joint(child_elem);
+                    break;
+                }
+                case "body": {
+                    def.body = this.parse_one_body(child_elem);
+                    break;
+                }
+                case "material": {
+                    def.material = this.parse_one_material(child_elem);
+                    break;
+                }
+                case "default": {
+                    const class_name = safe_parse_string(child_elem, "class", "");
+                    if (class_name == "") {
+                        console.warn("Found a default without a class name");
+                    }
+                    const child_def = new mjsDefault(class_name);
+                    child_def.parent = def;
+                    def.children.push(child_def);
+                    this.spec.defaults[child_def.name] = child_def;
+                    this.parse_default(child_elem, child_def);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param {Element} elem
+     */
+    parse_assets_section(elem) {
+        for (const child_elem of elem.children) {
+            switch (child_elem.tagName) {
+                case "texture": {
+                    const texture = this.parse_one_texture(child_elem);
+                    this.spec.textures[texture.name] = texture;
+                    break;
+                }
+                case "material": {
+                    const material = this.parse_one_material(child_elem);
+                    this.spec.materials[material.name] = material;
+                    break;
+                }
+                case "mesh": {
+                    const mesh = this.parse_one_mesh(child_elem);
+                    this.spec.meshes[mesh.name] = mesh;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param {Element} elem
+     */
+    parse_worldbody_section(elem) {
+        const stack = [{ "xml": elem, "parent": null }];
+        while (stack.length > 0) {
+            const tuple = stack.shift();
+            const xml = tuple["xml"];
+            const parent = tuple["parent"];
+            switch (xml.tagName) {
+                case "worldbody": {
+                    const worldbody = new mjsWorldbody();
+                    for (const child_elem of xml.children) {
+                        stack.push({"xml": child_elem, "parent": worldbody});
+                    }
+                    this.spec.worldbody = worldbody;
+                    break;
+                }
+                case "body": {
+                    const body = this.parse_one_body(xml);
+                    for (const child_elem of xml.children) {
+                        stack.push({"xml": child_elem, "parent": body});
+                    }
+                    this.spec.bodies.push(body);
+                    if (parent != null) {
+                        body.parent = parent;
+                        if (parent instanceof mjsWorldbody) {
+                            parent.children.push(body);
+                        }
+                        else if (parent instanceof mjsBody) {
+                            parent.bodies.push(body);
+                        }
+                    }
+                    break;
+                }
+                case "light": {
+                    const light = this.parse_one_light(xml);
+                    if (parent != null) {
+                        light.parent = parent;
+                        if (parent instanceof mjsWorldbody) {
+                            parent.children.push(light);
+                        }
+                        else if (parent instanceof mjsBody) {
+                            parent.lights.push(light);
+                        }
+                        else {
+                            console.error("Light object can only have 'body' and 'worldbody' as parents");
+                        }
+                    }
+                    break;
+                }
+                case "geom": {
+                    const geom = this.parse_one_geom(xml);
+                    if (parent != null) {
+                        geom.parent = parent;
+                        if (parent instanceof mjsWorldbody) {
+                            parent.children.push(geom);
+                        }
+                        else if (parent instanceof mjsBody) {
+                            parent.geoms.push(geom);
+                        }
+                        else {
+                            console.error("Geom object can only have 'body' and 'worldbody' as parents");
+                        }
+                    }
+                    break;
+                }
+                case "joint": {
+                    const joint = this.parse_one_joint(xml);
+                    if (parent != null) {
+                        joint.parent = parent;
+                        if (parent instanceof mjsBody) {
+                            parent.joints.push(joint);
+                        }
+                        else {
+                            console.error("Joint object can only have 'body' as parent");
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param {Element} elem 
+     * @returns {mjsLight}
+     */
+    parse_one_light(elem) {
+        const light = new mjsLight();
+        light.name = safe_parse_string(elem, "name", "light-" + this._numLights.toString());
+        light.pos = safe_parse_vector3(elem, "pos", new THREE.Vector3(0, 0, 0));
+        light.dir = safe_parse_vector3(elem, "dir", new THREE.Vector3(0, 0, -1));
+        light.directional = safe_parse_boolean(elem, "directional", false);
+        light.castshadow = safe_parse_boolean(elem, "castshadow", true);
+        light.attenuation = safe_parse_vector3(elem, "attenuation", new THREE.Vector3(1, 0, 0));
+        light.cutoff = safe_parse_float(elem, "cutoff", 45.0);
+        light.exponent = safe_parse_float(elem, "exponent", 10.0);
+        light.ambient = safe_parse_rgb(elem, "ambient", new THREE.Color(0, 0, 0));
+        light.diffuse = safe_parse_rgb(elem, "diffuse", new THREE.Color(0.7, 0.7, 0.7));
+        light.specular = safe_parse_rgb(elem, "specular", new THREE.Color(0.3, 0.3, 0.3));
+        light.class = safe_parse_string(elem, "class", "");
+        if (!this.readingDefaults) {
+            this._numLights++;
+        }
+        return light;
+    }
+
+    /**
+     * @param {Element} elem 
+     * @returns {mjsGeom}
+     */
+    parse_one_geom(elem) {
+        const geom = new mjsGeom();
+        geom.name = safe_parse_string(elem, "name", "geom-" + this._numGeoms.toString());
+        geom.type = safe_parse_string(elem, "type", "");
+        const [pos, quat] = safe_parse_pose(elem);
+        geom.pos.copy(pos);
+        geom.quat.copy(quat);
+        if (elem.hasAttribute("size")) {
+            const size_arr = elem.getAttribute("size").split(" ");
+            for (let i = 0; i < size_arr.length; i++) {
+                geom.size[i] = parseFloat(size_arr[i]);
+            }
+        }
+//         switch (geom.type) {
+//             case "sphere": {
+//                 if (elem.hasAttribute("size")) {
+//                     const radius = safe_parse_float(elem, "size", 0.1);
+//                     geom.size.set(radius, radius, radius);
+//                 }
+//                 break;
+//             }
+//             case "plane": {
+//                 geom.size = safe_parse_vector3(elem, "size", new THREE.Vector3(1, 1, 0.1));
+//                 break;
+//             }
+//             case "box": {
+//                 if (elem.hasAttribute("fromto")) {
+//                     const space = safe_parse_float(elem, "size", 0.05);
+//                     const [v_from, v_to] = safe_parse_fromto(elem);
+//                     const vec = v_to.sub(v_from);
+//                     const length = vec.length();
+// 
+//                     // Save half-sizes for the box
+//                     geom.size.set(space, length / 2, space);
+//                     geom.pos.copy(v_to.add(v_from).multiplyScalar(0.5));
+//                     geom.quat.copy(z2quat(vec));
+//                 }
+//                 else {
+//                     if (elem.hasAttribute("size")) {
+//                         geom.size = safe_parse_vector3(elem, "size", new THREE.Vector3(0.1, 0.1, 0.1));
+//                     }
+//                 }
+//                 break;
+//             }
+//             case "ellipsoid": {
+//                 if (elem.hasAttribute("fromto")) {
+//                     console.error("Got 'fromto' in ellipsoid geom, which is not supported yet");
+//                 }
+//                 else {
+//                     if (elem.hasAttribute("size")) {
+//                         geom.size = safe_parse_vector3(elem, "size", new THREE.Vector3(0.1, 0.2, 0.3));
+//                     }
+//                 }
+//                 break;
+//             }
+//             case "cylinder":
+//             case "capsule": {
+//                 if (elem.hasAttribute("fromto")) {
+//                     const radius = safe_parse_float(elem, "size", 0.05);
+//                     const [v_from, v_to] = safe_parse_fromto(elem);
+//                     const vec = v_to.sub(v_from);
+//                     const length = vec.length();
+// 
+//                     // Save radius + half-length
+//                     geom.size.set(radius, length / 2, radius);
+//                     geom.pos.copy(v_to.add(v_from).multiplyScalar(0.5));
+//                     geom.quat.copy(z2quat(vec));
+//                 }
+//                 else {
+//                     if (elem.hasAttribute("size")) {
+//                         const size_arr = elem.getAttribute("size").split(" ");
+//                         const radius = parseFloat(size_arr[0]);
+//                         const half_length = parseFloat(size_arr[1]);
+//                         geom.size.set(radius, half_length, radius);
+//                         console.info("geom.size: " + geom.size);
+//                     }
+//                 }
+//                 break;
+//             }
+// 
+//             default:
+//                 break;
+//         }
+
+        geom.material = safe_parse_string(elem, "material", "");
+        geom.rgba = safe_parse_vector4(elem, "rgba", new THREE.Vector4(0.5, 0.5, 0.5, 1.0));
+        geom.group = safe_parse_int(elem, "group", 0);
+        geom.hfieldname = safe_parse_string(elem, "hfieldname", "");
+        geom.meshname = safe_parse_string(elem, "meshname", "");
+        geom.class = safe_parse_string(elem, "class", "");
+        if (!this.readingDefaults) {
+            this._numGeoms++;
+        }
+        return geom;
+    }
+
+    /**
+     * @param {Element} elem
+     * @return {mjsJoint}
+     */
+    parse_one_joint(elem) {
+        const joint = new mjsJoint();
+        joint.name = safe_parse_string(elem, "name", "joint-" + this._numJoints.toString());
+        joint.class = safe_parse_string(elem, "class", "");
+        joint.type = safe_parse_string(elem, "type", "hinge");
+        joint.group = safe_parse_int(elem, "group", 0);
+        joint.pos = safe_parse_vector3(elem, "pos", new THREE.Vector3(0, 0, 0));
+        joint.axis = safe_parse_vector3(elem, "axis", new THREE.Vector3(0, 0, 1));
+        joint.stiffness = safe_parse_float(elem, "stiffness", 0.0);
+        joint.range = safe_parse_vector2(elem, "range", new THREE.Vector2(0, 0));
+        joint.limited = safe_parse_string(elem, "limited", "auto");
+        if (!this.readingDefaults) {
+            this._numJoints++;
+        }
+        return joint;
+    }
+
+    /**
+     * @param {Element} elem 
+     * @returns {mjsBody}
+     */
+    parse_one_body(elem) {
+        const body = new mjsBody();
+        body.name = safe_parse_string(elem, "name", "body-" + this._numBodies.toString());
+        body.childclass = safe_parse_string(elem, "childclass", "");
+        const [pos, quat] = safe_parse_pose(elem);
+        body.pos.copy(pos);
+        body.quat.copy(quat);
+        if (!this.readingDefaults) {
+            this._numBodies++;
+        }
+        return body;
+    }
+
+    /**
+     * @param {Element} elem
+     * @return {mjsTexture}
+     */
+    parse_one_texture(elem) {
+        const texture = new mjsTexture();
+        texture.name = safe_parse_string(elem, "name", "texture-" + this._numTextures.toString());
+        texture.type = safe_parse_string(elem, "type", "cube");
+        texture.file = safe_parse_string(elem, "file", "");
+        texture.builtin = safe_parse_string(elem, "builtin", "none");
+        texture.rgb1 = safe_parse_rgb(elem, "rgb1", new THREE.Color(0.8, 0.8, 0.8));
+        texture.rgb2 = safe_parse_rgb(elem, "rgb2", new THREE.Color(0.5, 0.5, 0.5));
+        texture.mark = safe_parse_string(elem, "mark", "none");
+        texture.markrgb = safe_parse_rgb(elem, "markrgb", new THREE.Color(0, 0, 0));
+        texture.random = safe_parse_float(elem, "random", 0.01);
+        texture.width = safe_parse_int(elem, "width", 0);
+        texture.height = safe_parse_int(elem, "height", 0);
+        texture.hflip = safe_parse_boolean(elem, "hflip", false);
+        texture.vflip = safe_parse_boolean(elem, "vflip", false);
+        if (!elem.hasAttribute("name")) {
+            // Get texture name from file name
+            texture.name = texture.file.replace(/^.*[\\/]/, "");
+        }
+        if (!this.readingDefaults) {
+            this._numTextures++;
+        }
+        return texture;
+    }
+
+    /**
+     * @param {Element} elem
+     * @return {mjsMaterial}
+     */
+    parse_one_material(elem) {
+        const material = new mjsMaterial();
+        material.name = safe_parse_string(elem, "name", "");
+        material.class = safe_parse_string(elem, "class", "");
+        material.texture = safe_parse_string(elem, "texture", "");
+        material.texuniform = safe_parse_boolean(elem, "texuniform", false);
+        material.texrepeat = safe_parse_vector2(elem, "texrepeat", new THREE.Vector2(1, 1));
+        material.emission = safe_parse_float(elem, "emission", 0.0);
+        material.specular = safe_parse_float(elem, "specular", 0.5);
+        material.shininess = safe_parse_float(elem, "shininess", 0.5);
+        material.reflectance = safe_parse_float(elem, "reflectance", 0.0);
+        material.metallic = safe_parse_float(elem, "metallic", 0.0);
+        material.roughness = safe_parse_float(elem, "roughness", 1.0);
+        material.rgba = safe_parse_vector4(elem, "rgba", new THREE.Vector4(1, 1, 1, 1));
+        if (!this.readingDefaults) {
+            this._numMaterials++;
+        }
+        return material;
+    }
+
+    /**
+     * @param {Element} elem
+     * @return {mjsMesh}
+     */
+    parse_one_mesh(elem) {
+        const mesh = new mjsMesh();
+        mesh.name = safe_parse_string(elem, "name", "");
+        mesh.class = safe_parse_string(elem, "class", "");
+        mesh.content_type = safe_parse_string(elem, "content_type", "");
+        mesh.file = safe_parse_string(elem, "file", "");
+        mesh.scale = safe_parse_vector3(elem, "scale", new THREE.Vector3(1, 1, 1));
+        mesh.inertia = safe_parse_string(elem, "inertia", "legacy");
+        mesh.smoothnormal = safe_parse_boolean(elem, "smoothnormal", false);
+        mesh.maxhullvert = safe_parse_int(elem, "maxhullvert", -1);
+        //// mesh.vertex = [];
+        //// mesh.normal = [];
+        //// mesh.texcoord = [];
+        //// mesh.face = [];
+        mesh.refpos = safe_parse_vector3(elem, "refpos", new THREE.Vector3());
+        mesh.refquat = safe_parse_quaternion(elem, "refquat", new THREE.Quaternion());
+        if (!elem.hasAttribute("name")) {
+            // Get mesh name from file name
+            mesh.name = mesh.file.replace(/^.*[\\/]/, "");
+        }
+        if (!this.readingDefaults) {
+            this._numMeshes++;
+        }
+        return mesh;
+    }
+
+    replace_defaults() {
+        const stack = [{"node": this.spec.worldbody, "class": "", "childclass": ""}];
+        while (stack.length > 0) {
+            const tuple = stack.shift();
+            const node = tuple["node"];
+            const cls = tuple["class"];
+            const childclass = tuple["childclass"];
+            if (node instanceof mjsWorldbody) {
+                for (const child of node.children) {
+                    stack.push({"node": child, "class": "", "childclass": ""});
+                }
+            }
+            else if (node instanceof mjsBody) {
+                for (const geom of node.geoms) {
+                    stack.push({"node": geom, "class": node.childclass == "" ? geom.class : node.childclass, "childclass": node.childclass == "" ? childclass : node.childclass});
+                }
+                for (const joint of node.joints) {
+                    stack.push({"node": joint, "class": node.childclass == "" ? joint.class : node.childclass, "childclass": node.childclass});
+                }
+                for (const light of node.lights) {
+                    stack.push({"node": light, "class": node.childclass == "" ? light.class : node.childclass, "childclass": node.childclass});
+                }
+                for (const body of node.bodies) {
+                    stack.push({"node": body, "class": body.childclass, "childclass": body.childclass != "" ? body.childclass : (node.childclass != "" ? node.childclass : childclass)});
+                }
+            }
+            else if (node instanceof mjsGeom) {
+                if (node.type == "") {
+                    this.replace_one_geom(node, "type", cls, childclass);
+                }
+                if (node.size[0] == 0 && node.size[1] == 0 && node.size[2] == 0) {
+                    this.replace_one_geom(node, "size", cls, childclass);
+                }
+                if (node.material == "") {
+                    this.replace_one_geom(node, "material", cls, childclass);
+                }
+                if (node.rgba.x == 0.5 && node.rgba.y == 0.5 && node.rgba.z == 0.5 && node.rgba.w == 1) {
+                    this.replace_one_geom(node, "rgba", cls, childclass);
+                }
+                if (node.group == 0) {
+                    this.replace_one_geom(node, "group", cls, childclass);
+                }
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {mjsGeom} node 
+     * @param {string} attribute
+     * @param {string} cls 
+     * @param {string} childclass 
+     */
+    replace_one_geom(node, attribute, cls, childclass) {
+        if (cls != "") {
+            if (this.spec.defaults[cls].geom != null) {
+                node[attribute] = this.spec.defaults[cls].geom[attribute];
+            }
+        }
+        else if (childclass != "") {
+            if (this.spec.defaults[childclass].geom != null) {
+                node[attribute] = this.spec.defaults[childclass].geom[attribute];
+            }
+        }
+        else {
+            if (this.spec.defaults["main"].geom != null) {
+                node[attribute] = this.spec.defaults["main"].geom[attribute];
+            }
+        }
+    }
+}
+
+
+
+
 
 /**
  * @param {Element} xml_element The XML element from which to get the attribute
@@ -409,135 +966,6 @@ export function safe_parse_geom(xml_element) {
 
     return mesh;
 }
-
-
-class AssetTexture {
-
-    constructor() {
-        this.name = "";
-        this.type = "2d";
-        this.file = "";
-        this.builtin = "none"; // one of: none, gradient, checker, flat
-        this.rgb1 = new THREE.Color(0.8, 0.8, 0.8);
-        this.rgb2 = new THREE.Color(0.5, 0.5, 0.5);
-        this.mark = "none"; // one of: none, edge, cross, random
-        this.markrgb = new THREE.Color(0, 0, 0);
-        this.random = 0.01;
-        this.width = 0;
-        this.height = 0;
-        this.hflip = false;
-        this.vflip = false;
-    }
-};
-
-class AssetMaterial {
-
-    /**
-     * @param {string} name A required string representing the material's name
-     */
-    constructor(name) {
-        this.name = name;
-        this.class = "";
-        this.texture = "";
-        this.texuniform = false;
-        this.texrepeat = new THREE.Vector2(1, 1);
-        this.emission = 0.0;
-        this.specular = 0.5;
-        this.shininess = 0.5;
-        this.reflectance = 0.0;
-        this.metallic = 0.0;
-        this.roughness = 1.0;
-        this.rgba = new THREE.Vector4(1, 1, 1, 1);
-    }
-};
-
-
-
-class ParserCtx {
-
-    constructor() {
-        /** @type {Object.<string, AssetTexture>} */
-        this.textures = {}
-        /** @type {Object.<string, AssetMaterial>} */
-        this.materials = {}
-    }
-
-
-}
-
-
-
-/**
- * @param {Element} xml_element 
- */
-export function parse_asset_section(xml_element) {
-    /** @type {AssetTexture[]} */
-    const textures = [];
-    const xml_textures = xml_element.getElementsByTagName("texture");
-    for (const xml_texture of xml_textures) {
-        textures.push(parse_one_texture(xml_texture));
-    }
-
-    /** @type {AssetMaterial[]} */
-    const materials = [];
-    const xml_materials = xml_element.getElementsByTagName("material");
-    for (const xml_material of xml_materials) {
-        materials.push(parse_one_material(xml_material));
-    }
-}
-
-/**
- * @param {Element} xml_element 
- * @return {AssetTexture}
- */
-export function parse_one_texture(xml_element) {
-    const asset_texture = new AssetTexture();
-    asset_texture.name = safe_parse_string(xml_element, "name", "texture-" + NUM_TEXTURES.toString());
-    asset_texture.type = safe_parse_string(xml_element, "type", "cube");
-    asset_texture.file = safe_parse_string(xml_element, "file", "");
-    asset_texture.builtin = safe_parse_string(xml_element, "builtin", "none");
-    asset_texture.rgb1 = safe_parse_rgb(xml_element, "rgb1", new THREE.Color(0.8, 0.8, 0.8));
-    asset_texture.rgb2 = safe_parse_rgb(xml_element, "rgb2", new THREE.Color(0.5, 0.5, 0.5));
-    asset_texture.mark = safe_parse_string(xml_element, "mark", "none");
-    asset_texture.markrgb = safe_parse_rgb(xml_element, "markrgb", new THREE.Color(0, 0, 0));
-    asset_texture.random = safe_parse_float(xml_element, "random", 0.01);
-    asset_texture.width = safe_parse_int(xml_element, "width", 0);
-    asset_texture.height = safe_parse_int(xml_element, "height", 0);
-    asset_texture.hflip = safe_parse_boolean(xml_element, "hflip", false);
-    asset_texture.vflip = safe_parse_boolean(xml_element, "vflip", false);
-
-    if (!xml_element.hasAttribute("name")) {
-        // Get texture name from file name
-        asset_texture.name = asset_texture.file.replace(/^.*[\\/]/, "");
-    }
-
-    NUM_TEXTURES++;
-    return asset_texture;
-}
-
-/**
- * @param {Element} xml_element 
- * @return {AssetMaterial}
- */
-export function parse_one_material(xml_element) {
-    const name = xml_element.getAttribute("name");
-    const asset_material = new AssetMaterial(name);
-    asset_material.class = safe_parse_string(xml_element, "class", "");
-    asset_material.texture = safe_parse_string(xml_element, "texture", "");
-    asset_material.texuniform = safe_parse_boolean(xml_element, "texuniform", false);
-    asset_material.texrepeat = safe_parse_vector2(xml_element, "texrepeat", new THREE.Vector2(1, 1));
-    asset_material.emission = safe_parse_float(xml_element, "emission", 0.0);
-    asset_material.specular = safe_parse_float(xml_element, "specular", 0.5);
-    asset_material.shininess = safe_parse_float(xml_element, "shininess", 0.5);
-    asset_material.reflectance = safe_parse_float(xml_element, "reflectance", 0.0);
-    asset_material.metallic = safe_parse_float(xml_element, "metallic", 0.0);
-    asset_material.roughness = safe_parse_float(xml_element, "roughness", 1.0);
-    asset_material.rgba = safe_parse_vector4(xml_element, "rgba", new THREE.Vector4(1, 1, 1, 1));
-
-    return asset_material;
-}
-
-
 
 
 

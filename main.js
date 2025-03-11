@@ -1,167 +1,35 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as MjParser from './src/parser';
+import { mjXReader } from './src/parser';
+import { Visualizer } from './src/visualizer';
 
-var scene = null;
-var camera = null;
-var renderer = null;
-var controls = null;
-
-var NUM_BODIES = 0;
-var NUM_GEOMS = 0;
-var NUM_LIGHTS = 0;
-var NUM_JOINTS = 0;
+/** @type {Visualizer} */
+var visualizer = null;
 
 function init() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-
-    const grid = new THREE.GridHelper(10, 10, 0x444444, 0x888888);
-    scene.add(grid);
-
-    const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
-    scene.add(ambientLight);
-
-    scene.background = new THREE.Color(0.15, 0.25, 0.35);
-    scene.fog = new THREE.Fog(scene.background, 15, 25.5);
-
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
-
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.update();
-
-    camera.position.set(1, 1, 2);
+    visualizer = new Visualizer(window.innerWidth, window.innerHeight);
 
     window.addEventListener("resize", resize);
 
-    fetch("./assets/ant.xml")
+    fetch("./assets/humanoid.xml")
         .then(response => response.text())
         .then(xml_str => {
             const parser = new DOMParser();
             const xml_doc = parser.parseFromString(xml_str, "text/xml");
 
-            // Parse the mjcf file (worldbody section)
-            const worldbody_elms = xml_doc.getElementsByTagName("worldbody");
-            const stack = [];
-            if (worldbody_elms.length > 0) {
-                stack.push({ "xml": worldbody_elms[0], "parent": scene, "transform": new THREE.Matrix4() });
-                while (stack.length > 0) {
-                    const tuple = stack.shift();
-                    const parent = tuple["parent"];
-                    const xml = tuple["xml"];
-                    const transform = tuple["transform"];
+            const mjreader = new mjXReader();
+            mjreader.parse(xml_doc.children[0]);
 
-                    switch (xml.tagName) {
-                        case "worldbody": {
-                            const worldbody_object = new THREE.Group();
-                            worldbody_object.rotation.x = -Math.PI * 0.5;
-                            parent.add(worldbody_object);
-                            for (const child_xml of xml.children) {
-                                stack.push({
-                                    "xml": child_xml,
-                                    "parent": worldbody_object,
-                                    "transform": transform.clone(),
-                                });
-                            }
-                            break;
-                        }
-
-                        case "light": {
-                            const light = MjParser.safe_parse_light(xml, parent);
-                            if (light != null) {
-                                const pos = MjParser.safe_parse_vector3(xml, "pos", new THREE.Vector3());
-                                const local_tf = new THREE.Matrix4();
-                                local_tf.setPosition(pos.x, pos.y, pos.z);
-                                const world_tf = transform.multiply(local_tf);
-                                
-                                light.name = MjParser.safe_parse_string(xml, "name", "light-" + NUM_LIGHTS.toString());
-                                let position = new THREE.Vector3();
-                                let quaternion = new THREE.Quaternion();
-                                let scale = new THREE.Vector3();
-                                local_tf.decompose(position, quaternion, scale);
-                                light.position.copy(position);
-                                light.quaternion.copy(quaternion);
-
-                                // light.matrix.copy(local_tf);
-                                // light.matrixWorld.copy(world_tf);
-
-                                parent.add(light);
-                                // if (light.target && (light.isDirectionalLight || light.isSpotLight)) {
-                                //     parent.add(light.target);
-                                // }
-                            }
-
-                            NUM_LIGHTS++;
-                            // Branch stops here as this is a leaf node
-                            break;
-                        }
-
-                        case "joint": {
-                            NUM_JOINTS++;
-                            // Do nothing for now
-                            break;
-                        }
-
-                        case "geom": {
-                            const geom_mesh = MjParser.safe_parse_geom(xml, parent);
-                            geom_mesh.name = MjParser.safe_parse_string(xml, "name", "geom-" + NUM_GEOMS.toString());
-                            
-                            parent.add(geom_mesh);
-                        }
-
-                        case "body": {
-                            const body_obj = new THREE.Object3D();
-                            const local_tf = MjParser.safe_parse_transform(xml);
-                            const world_tf = transform.multiply(local_tf);
-
-                            body_obj.name = MjParser.safe_parse_string(xml, "name", "body-" + NUM_BODIES.toString());
-                            let position = new THREE.Vector3();
-                            let quaternion = new THREE.Quaternion();
-                            let scale = new THREE.Vector3(1, 1, 1);
-                            local_tf.decompose(position, quaternion, scale);
-                            body_obj.position.copy(position);
-                            body_obj.quaternion.copy(quaternion);
-                            // body_obj.matrixWorld.copy(world_tf);
-
-                            parent.add(body_obj);
-
-                            for (const child_xml of xml.children) {
-                                stack.push({
-                                    "xml": child_xml,
-                                    "parent": body_obj,
-                                    "transform": world_tf.clone(),
-                                });
-                            }
-
-                            NUM_BODIES++;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            console.info("Finished parsing XML file");
+            visualizer.initFromSpec(mjreader.spec);
         });
 }
 
 function animate() {
     requestAnimationFrame(animate);
-
-    controls.update();
-
-    renderer.render(scene, camera);
+    visualizer.update();
 }
 
 function resize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    visualizer.onResize(window.innerWidth, window.innerHeight);
 }
 
 init();
