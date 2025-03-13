@@ -1,6 +1,5 @@
-import * as THREE from 'three';
-import { mjXReader } from './src/parser';
-import { Visualizer } from './src/visualizer';
+import { mjXReader } from './src/parser.js';
+import { Visualizer } from './src/visualizer.js';
 
 /** @type {Visualizer} */
 var visualizer = null;
@@ -12,6 +11,8 @@ function init() {
 
     // const model_uri = "./assets/mustard_bottle/model.xml";
     const model_uri = "./assets/kitchen/kitchen.xml";
+    // const model_uri = "./assets/robothor/robothor.xml";
+    // const model_uri = "./assets/elements/wall_2.xml";
 
     fetch(model_uri)
         .then(response => response.text())

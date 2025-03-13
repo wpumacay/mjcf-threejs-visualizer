@@ -156,8 +156,11 @@ export class mjSpec {
     constructor(modelName) {
         this.modelName = modelName;
         this.defaults = { "main": new mjsDefault("main") };
+        /** @type {Object.<string, mjsTexture>} */
         this.textures = {};
+        /** @type {Object.<string, mjsMaterial>} */
         this.materials = {};
+        /** @type {Object.<string, mjsMesh>} */
         this.meshes = {};
         this.bodies = [];
         this.lights = [];

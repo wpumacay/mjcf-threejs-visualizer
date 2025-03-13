@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { z2quat } from './math';
-import { mjSpec, mjsDefault, mjsLight, mjsGeom, mjsBody, mjsTexture, mjsMaterial, mjsMesh, mjsJoint, mjsWorldbody } from './mjcf';
+import { z2quat } from './math.js';
+import { mjSpec, mjsDefault, mjsLight, mjsGeom, mjsBody, mjsTexture, mjsMaterial, mjsMesh, mjsJoint, mjsWorldbody } from './mjcf.js';
 
 var NUM_TEXTURES = 0;
 var NUM_MATERIALS = 0;

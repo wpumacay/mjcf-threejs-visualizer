@@ -1,8 +1,68 @@
 import * as THREE from 'three';
-import { mjsLight, mjSpec, mjsWorldbody, mjsGeom, mjsBody } from './mjcf';
+import { mjsLight, mjSpec, mjsWorldbody, mjsGeom, mjsBody } from './mjcf.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+
+class AssetsManager {
+
+    /**
+     * @param {string} basedir
+     */
+    constructor(basedir) {
+        this.basedir = basedir;
+        this.objloader = new OBJLoader();
+        this.texloader = new THREE.TextureLoader();
+
+        this.num_meshes_to_load = 0;
+        this.num_textures_to_load = 0;
+
+        this.num_meshes_loaded = 0;
+        this.num_textures_loaded = 0;
+
+        this.meshes = {};
+        this.textures = {};
+        this.materials = {};
+    }
+
+    /**
+     * @param {mjSpec} spec
+     */
+    load(spec) {
+        this.num_meshes_to_load = 0;
+        this.num_meshes_loaded = 0;
+        this.num_textures_to_load = 0;
+        this.num_textures_loaded = 0;
+
+        for (const texture_id in spec.textures) {
+            const texture_uri = this.basedir + "/" + spec.textures[texture_id].file;
+            const texture = this.texloader.load(texture_uri);
+            this.textures[texture_id] = texture;
+            this.num_textures_to_load++;
+            this.num_textures_loaded++;
+        }
+
+        for (const material_id in spec.materials) {
+            const specMaterial = spec.materials[material_id];
+            const parameters = {
+                color: new THREE.Color(
+                    specMaterial.rgba.x,
+                    specMaterial.rgba.y,
+                    specMaterial.rgba.z,
+                ),
+                shininess: specMaterial.shininess * 128,
+                opacity: specMaterial.rgba.w,
+            };
+            if ((specMaterial.texture != "") && (specMaterial.texture in this.textures)) {
+                parameters["map"] = this.textures[specMaterial.texture];
+            }
+
+            const material = new THREE.MeshPhongMaterial(parameters);
+            this.materials[material_id] = material;
+        }
+    }
+
+}
+
 
 export class Visualizer {
 
@@ -16,6 +76,8 @@ export class Visualizer {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0.15, 0.25, 0.35);
         this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100);
+
+        this.scene.add(new THREE.AmbientLight(0x777777));
 
         const axesHelper = new THREE.AxesHelper(5);
         this.scene.add(axesHelper);
@@ -33,8 +95,10 @@ export class Visualizer {
 
         this.camera.position.set(1, 1, 2);
 
+        /** @type {AssetsManager} */
+        this.assetsManager = null;
+
         this.objLoader = new OBJLoader();
-        this.mtlloader = new MTLLoader();
     }
 
     /**
@@ -46,7 +110,9 @@ export class Visualizer {
         this.uri = uri;
 
         this.basedir = this.uri.substring(0, this.uri.lastIndexOf("/"));
-        this.mtlloader.setPath(this.basedir);
+        this.assetsManager = new AssetsManager(this.basedir);
+
+        this.assetsManager.load(spec);
 
         const stack = [{ node: this.spec.worldbody, parent: null }];
         while (stack.length > 0) {
@@ -122,9 +188,27 @@ export class Visualizer {
                         if (mesh_name in this.spec.meshes) {
                             const mesh_spec = this.spec.meshes[mesh_name];
                             const mesh_uri = this.basedir + "/" + mesh_spec.file;
+                            const self = this;
                             this.objLoader.load(
                                 mesh_uri,
                                 function (object) {
+                                    object.scale.copy(mesh_spec.scale);
+                                    object.traverse((child) => {
+                                        if (child.isMesh) {
+                                            if (node.material in self.assetsManager.materials) {
+                                                child.material = self.assetsManager.materials[node.material];
+                                            }
+                                            else {
+                                                child.material = new MeshPhongMaterial(
+                                                    {color: new THREE.Color(
+                                                        node.rgba.x,
+                                                        node.rgba.y,
+                                                        node.rgba.z,
+                                                    )}
+                                                );
+                                            }
+                                        }
+                                    });
                                     parent.add(object)
                                 },
                                 null,
@@ -133,6 +217,27 @@ export class Visualizer {
                                 }
                             )
                         }
+                        // if (mesh_name in this.spec.meshes) {
+                        //     const mesh_spec = this.spec.meshes[mesh_name];
+                        //     const filename = mesh_spec.file.replace(/\.[^/.]+$/, "");
+                        //     const mesh_uri = this.basedir + "/" + mesh_spec.file;
+                        //     const mesh_mtl_uri = this.basedir + "/" + filename + ".mtl";
+                        //     const mtlloader = new MTLLoader();
+                        //     mtlloader.load(
+                        //         mesh_mtl_uri,
+                        //         (mtl) => {
+                        //             mtl.preload();
+                        //             const objloader = new OBJLoader();
+                        //             objloader.setMaterials(mtl);
+                        //             objloader.load(
+                        //                 mesh_uri,
+                        //                 (object) => {
+                        //                     parent.add(object);
+                        //                 }
+                        //             )
+                        //         }
+                        //     )
+                        // }
                         break;
                     }
                     default:
