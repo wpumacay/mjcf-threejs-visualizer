@@ -756,7 +756,7 @@
     </body>
 
 
-    <body name="Toaster|surface|2|1" pos="1.50 0.35 1.0326501131057737" euler="1.5707963267948966 3.14 0">
+    <body name="Toaster|surface|2|1" pos="1.50 0.35 0.98326501131057737" euler="1.5707963267948966 3.14 0">
       <joint name="Toaster|surface|2|1" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Toaster|surface|2|1__0" class="__VISUAL_MJT__" type="mesh" material="Toaster_Coils_Off_Mat" mesh="Toaster_24_0"/>
@@ -795,7 +795,7 @@
       <geom name="Toaster|surface|2|1__33" class="__DYNAMIC_MJT__" type="mesh" rgba="0.30660343232094756 0.8821899539689968 0.044545575125089831 1" mesh="Toaster_24_collision_28"/>
       <geom name="Toaster|surface|2|1__34" class="__DYNAMIC_MJT__" type="mesh" rgba="0.66864933319863418 0.32478246304779956 0.71216467741538059 1" mesh="Toaster_24_collision_29"/>
     </body>
-    <body name="SprayBottle|surface|2|2" pos="1.250 0.45 1.066107392311096" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="SprayBottle|surface|2|2" pos="1.250 0.45 1.0166107392311096" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="SprayBottle|surface|2|2" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="SprayBottle|surface|2|2__0" class="__VISUAL_MJT__" type="mesh" material="SprayBottle1_varH" mesh="Spray_Bottle_8"/>
@@ -806,7 +806,7 @@
       <geom name="SprayBottle|surface|2|2__5" class="__DYNAMIC_MJT__" type="mesh" rgba="0.73751529947797512 0.48503909040224058 0.53009171904018415 1" mesh="Spray_Bottle_8_collision_4"/>
       <geom name="SprayBottle|surface|2|2__6" class="__DYNAMIC_MJT__" type="mesh" rgba="0.13025478445520078 0.81603041161827516 0.36005691091016623 1" mesh="Spray_Bottle_8_collision_5"/>
     </body>
-    <body name="Spatula|surface|2|6" pos="2.50 0.5 0.95099121332168557" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="Spatula|surface|2|6" pos="2.50 0.5 0.92099121332168557" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="Spatula|surface|2|6" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Spatula|surface|2|6__0" class="__VISUAL_MJT__" type="mesh" material="HammeredMetal_AlbedoTransparency" mesh="Spatula_1_0"/>
@@ -814,13 +814,13 @@
       <geom name="Spatula|surface|2|6__2" class="__DYNAMIC_MJT__" type="mesh" rgba="0.67101901648989093 0.94724230648450136 0.93194611815004458 1" mesh="Spatula_1_collision_0"/>
       <geom name="Spatula|surface|2|6__3" class="__DYNAMIC_MJT__" type="mesh" rgba="0.5887995059040021 0.72670003406154227 0.74815375251823568 1" mesh="Spatula_1_collision_1"/>
     </body>
-    <body name="Potato|surface|2|9" pos="2.850 0.75 0.9986758232116697" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="Potato|surface|2|9" pos="2.850 0.75 0.9586758232116697" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="Potato|surface|2|9" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Potato|surface|2|9__0" class="__VISUAL_MJT__" type="mesh" material="Potato3_Mat4" mesh="Potato_29"/>
       <geom name="Potato|surface|2|9__1" class="__DYNAMIC_MJT__" type="mesh" rgba="0.61314683190529584 0.35906131297695454 0.96594360735515916 1" mesh="Potato_29_collision_0"/>
     </body>
-    <body name="Tomato|surface|2|14" pos="2.60 0.55 0.99217438697814919" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="Tomato|surface|2|14" pos="2.60 0.55 0.95217438697814919" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="Tomato|surface|2|14" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Tomato|surface|2|14__0" class="__VISUAL_MJT__" type="mesh" material="Tomato2_Mat3" mesh="Tomato_19"/>
@@ -833,7 +833,7 @@
       <geom name="Tomato|surface|2|14__7" class="__DYNAMIC_MJT__" type="mesh" rgba="0.36735994248993509 0.037760689099102129 0.41359947458496937 1" mesh="Tomato_19_collision_6"/>
       <geom name="Tomato|surface|2|14__8" class="__DYNAMIC_MJT__" type="mesh" rgba="0.38238139666944448 0.8529394769053783 0.054653089287542755 1" mesh="Tomato_19_collision_7"/>
     </body>
-    <body name="Cup|surface|2|15" pos="2.70 1.05 1.02129590511322" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="Cup|surface|2|15" pos="2.70 1.05 0.92129590511322" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="Cup|surface|2|15" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Cup|surface|2|15__0" class="__VISUAL_MJT__" type="mesh" material="RoboTHOR_Cup_Primary_AI2_Mat" mesh="RoboTHOR_cup_ai2_v"/>
@@ -851,13 +851,13 @@
       <geom name="Cup|surface|2|15__12" class="__DYNAMIC_MJT__" type="mesh" rgba="0.32903500791320228 0.36058679888199341 0.74754561272403874 1" mesh="RoboTHOR_cup_ai2_v_collision_11"/>
       <geom name="Cup|surface|2|15__13" class="__DYNAMIC_MJT__" type="mesh" rgba="0.92927122886210256 0.71851170193150737 0.012070865822876753 1" mesh="RoboTHOR_cup_ai2_v_collision_12"/>
     </body>
-    <body name="DishSponge|surface|2|19" pos="1.1395729064941388 0.5204641342163068 0.95620280504226662" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="DishSponge|surface|2|19" pos="1.1395729064941388 0.5204641342163068 0.85620280504226662" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="DishSponge|surface|2|19" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="DishSponge|surface|2|19__0" class="__VISUAL_MJT__" type="mesh" material="SpongeGreenYellow" mesh="Dish_Sponge_1"/>
       <geom name="DishSponge|surface|2|19__1" class="__DYNAMIC_MJT__" type="mesh" rgba="0.70672043769633031 0.42090086659132675 0.095149139203413946 1" mesh="Dish_Sponge_1_collision_0"/>
     </body>
-    <body name="PepperShaker|surface|2|22" pos="2.594865417480467 1.561687469482404 1.0418900251388548" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="PepperShaker|surface|2|22" pos="2.594865417480467 1.561687469482404 0.9418900251388548" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="PepperShaker|surface|2|22" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="PepperShaker|surface|2|22__0" class="__VISUAL_MJT__" type="mesh" material="PepperNoise" mesh="Pepper_Shaker_2_0"/>
@@ -877,7 +877,7 @@
       <geom name="PepperShaker|surface|2|22__14" class="__DYNAMIC_MJT__" type="mesh" rgba="0.67370657203734818 0.92472926636667341 0.27863448756138476 1" mesh="Pepper_Shaker_2_collision_11"/>
       <geom name="PepperShaker|surface|2|22__15" class="__DYNAMIC_MJT__" type="mesh" rgba="0.34402683286933655 0.3604217710627925 0.92700538655451803 1" mesh="Pepper_Shaker_2_collision_12"/>
     </body>
-    <body name="Ladle|surface|2|23" pos="2.7217945098876935 0.6220779418928 0.96390789747238137" euler="1.5707963267948966 0.3 0">
+    <body name="Ladle|surface|2|23" pos="2.7217945098876935 0.6220779418928 0.93390789747238137" euler="1.5707963267948966 0.3 0">
       <joint name="Ladle|surface|2|23" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Ladle|surface|2|23__0" class="__VISUAL_MJT__" type="mesh" material="Black.001" mesh="Ladle_2_0"/>
@@ -896,7 +896,7 @@
       <geom name="Ladle|surface|2|23__13" class="__DYNAMIC_MJT__" type="mesh" rgba="0.57149627663165969 0.13393441877354517 0.61860453049500286 1" mesh="Ladle_2_collision_11"/>
       <geom name="Ladle|surface|2|23__14" class="__DYNAMIC_MJT__" type="mesh" rgba="0.42820970709564277 0.55331487032973448 0.17095011967965767 1" mesh="Ladle_2_collision_12"/>
     </body>
-    <body name="WineBottle|surface|2|25" pos="2.7619261741638166 1.4359579086303693 1.1562806844711302" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="WineBottle|surface|2|25" pos="2.7619261741638166 1.4359579086303693 1.0562806844711302" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="WineBottle|surface|2|25" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="WineBottle|surface|2|25__0" class="__VISUAL_MJT__" type="mesh" material="Wine_Volume_Mat" mesh="Wine_Bottle_1_0"/>
@@ -910,7 +910,7 @@
       <geom name="WineBottle|surface|2|25__8" class="__DYNAMIC_MJT__" type="mesh" rgba="0.39275253551546097 0.046944993501339405 0.31340520851343556 1" mesh="Wine_Bottle_1_collision_5"/>
       <geom name="WineBottle|surface|2|25__9" class="__DYNAMIC_MJT__" type="mesh" rgba="0.95071921863993603 0.529431974714621 0.65882849370628271 1" mesh="Wine_Bottle_1_collision_6"/>
     </body>
-    <body name="Bowl|surface|2|26" pos="2.033004951477049 0.29824523924 1.05" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="Bowl|surface|2|26" pos="2.033004951477049 0.29824523924 0.95" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="Bowl|surface|2|26" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="Bowl|surface|2|26__0" class="__VISUAL_MJT__" type="mesh" material="Bowl_Decals_Off_Mat" mesh="Bowl_21_0"/>
@@ -946,7 +946,7 @@
       <geom name="Bowl|surface|2|26__30" class="__DYNAMIC_MJT__" type="mesh" rgba="0.67786187457918357 0.28056573343867708 0.27315659809523607 1" mesh="Bowl_21_collision_28"/>
       <geom name="Bowl|surface|2|26__31" class="__DYNAMIC_MJT__" type="mesh" rgba="0.049793433265378662 0.17094215631047416 0.64870229630224607 1" mesh="Bowl_21_collision_29"/>
     </body>
-    <body name="PaperTowelRoll|surface|2|28" pos="2.8474650382995588 1.305785369873029 1.0508309602737425" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="PaperTowelRoll|surface|2|28" pos="2.8474650382995588 1.205785369873029 0.98508309602737425" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="PaperTowelRoll|surface|2|28" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="PaperTowelRoll|surface|2|28__0" class="__VISUAL_MJT__" type="mesh" material="Paper_Towel_Mat" mesh="Paper_Towel_1"/>
@@ -957,7 +957,7 @@
       <geom name="PaperTowelRoll|surface|2|28__5" class="__DYNAMIC_MJT__" type="mesh" rgba="0.091354429988310004 0.16930800940327695 0.51024058683855067 1" mesh="Paper_Towel_1_collision_4"/>
       <geom name="PaperTowelRoll|surface|2|28__6" class="__DYNAMIC_MJT__" type="mesh" rgba="0.47133105706755241 0.020400412583910343 0.24178743368877953 1" mesh="Paper_Towel_1_collision_5"/>
     </body>
-    <body name="SaltShaker|surface|2|30" pos="2.5974521636962873 1.4311876296997053 0.99878156185150124" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="SaltShaker|surface|2|30" pos="2.5974521636962873 1.2311876296997053 0.929878156185150124" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="SaltShaker|surface|2|30" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="SaltShaker|surface|2|30__0" class="__VISUAL_MJT__" type="mesh" material="Glass_Detailed_Lit_Medium_Mat" mesh="Salt_Shaker_1_0"/>
@@ -966,7 +966,7 @@
       <geom name="SaltShaker|surface|2|30__3" class="__DYNAMIC_MJT__" type="mesh" rgba="0.30671907586508862 0.045630308395782082 0.67785078595221915 1" mesh="Salt_Shaker_1_collision_0"/>
       <geom name="SaltShaker|surface|2|30__4" class="__DYNAMIC_MJT__" type="mesh" rgba="0.13312496327956413 0.97034148468043402 0.17132406135072542 1" mesh="Salt_Shaker_1_collision_1"/>
     </body>
-    <body name="SoapBottle|surface|2|32" pos="2.794865417480467 1.67128593444824201 1.0985858440399168" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
+    <body name="SoapBottle|surface|2|32" pos="2.794865417480467 1.47128593444824201 1.0285858440399168" quat="0.70710678118654768 0.70710678118654746 4.3297802811774664e-17 4.329780281177467e-17">
       <joint name="SoapBottle|surface|2|32" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
 
       <geom name="SoapBottle|surface|2|32__0" class="__VISUAL_MJT__" type="mesh" material="Soap_Bottle_Filling1_mat" mesh="Soap_Bottle_10_0"/>
@@ -1176,12 +1176,12 @@
         </body>
       </body>
     </body>
-    <body name="Potato|surface|6|12" pos="0.50 1.65 1.11" quat="0.5 0.49999999999999989 0.5 0.50000000000000011">
+    <body name="Potato|surface|6|12" pos="0.50 1.65 0.951" quat="0.5 0.49999999999999989 0.5 0.50000000000000011">
       <joint name="Potato|surface|6|12" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
       <geom name="Potato|surface|6|12__0" class="__VISUAL_MJT__" type="mesh" material="Potato3_Mat2" mesh="Potato_27"/>
       <geom name="Potato|surface|6|12__1" class="__DYNAMIC_MJT__" type="mesh" rgba="0.62615087327813812 0.2209988127105309 0.82880637922980682 1" mesh="Potato_27_collision_0"/>
     </body>
-    <body name="Apple|surface|6|15" pos="0.56 1.8 1.11" quat="0.5 0.49999999999999989 0.5 0.50000000000000011">
+    <body name="Apple|surface|6|15" pos="0.56 1.8 0.951" quat="0.5 0.49999999999999989 0.5 0.50000000000000011">
       <joint name="Apple|surface|6|15" type="free" stiffness="0" damping="0.1" frictionloss="0" armature="0"/>
       <geom name="Apple|surface|6|15__0" class="__VISUAL_MJT__" type="mesh" material="Apple2_Mat3" mesh="Apple_21"/>
       <geom name="Apple|surface|6|15__1" class="__DYNAMIC_MJT__" type="mesh" rgba="0.98491886942309359 0.82951152719377341 0.16713058271625048 1" mesh="Apple_21_collision_0"/>
@@ -1212,7 +1212,7 @@
       <geom name="Apple|surface|6|7__6" class="__DYNAMIC_MJT__" type="mesh" rgba="0.3159221475593128 0.26340215574302417 0.40547100673059921 1" mesh="Apple_11_collision_5"/>
       <geom name="Apple|surface|6|7__7" class="__DYNAMIC_MJT__" type="mesh" rgba="0.38866600359446735 0.0049034954060693803 0.62495566985519835 1" mesh="Apple_11_collision_6"/>
     </body>
-    <body name="Microwave|surface|2|0" pos="2.00 0.35 1.075" euler="1.5707963267948966 3.14 0">
+    <body name="Microwave|surface|2|0" pos="2.00 0.35 1.035" euler="1.5707963267948966 3.14 0">
       <joint name="Microwave_1_free" class="/" type="free" pos="0 0 0" axis="0 0 1" stiffness="0" range="0 0" armature="0" damping="0.10000000000000001" frictionloss="0"/>
       <body name="Microwave_1_bodymesh_0" pos="-0.0001 -0.17676 -0.023740000000000001" quat="1 0 0 0">
         <site name="Microwave_1_bodymesh_0_Receptacle_0" class="__VISUAL_MJT__" type="box" pos="-0.06363131 0.1956 -0.0212" size="0.20625 0.11249985 0.12854005" quat="1 0 0 0"/>
